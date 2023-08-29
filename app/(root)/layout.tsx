@@ -32,7 +32,7 @@ export default function RootLayout({
             <RightSideBar />
           </main>
           <Bottombar />
-          {children}
+          {/* {children} not sure about this */}
         </body>
       </html>
     </ClerkProvider>
