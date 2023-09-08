@@ -1,17 +1,18 @@
-import CommunityCard from "@/components/cards/CommunityCard";
-import UserCard from "@/components/cards/UserCard";
-import PostThread from "@/components/forms/PostThread";
-import ProfileHeader from "@/components/shared/ProfileHeader";
-import ThreadsTab from "@/components/shared/ThreadsTab";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { profileTabs } from "@/constants";
-import { fetchCommunities } from "@/lib/actions/community.actions";
-import { fetchUser, fetchUsers } from "@/lib/actions/user.actions";
 import { currentUser } from "@clerk/nextjs";
-import Image from "next/image";
 import { redirect } from "next/navigation";
 
-const page = async () => {
+import Searchbar from "@/components/shared/Searchbar";
+import Pagination from "@/components/shared/Pagination";
+import CommunityCard from "@/components/cards/CommunityCard";
+
+import { fetchUser } from "@/lib/actions/user.actions";
+import { fetchCommunities } from "@/lib/actions/community.actions";
+
+async function Page({
+  searchParams,
+}: {
+  searchParams: { [key: string]: string | undefined };
+}) {
   const user = await currentUser();
   if (!user) return null;
 
@@ -19,18 +20,22 @@ const page = async () => {
   if (!userInfo?.onboarded) redirect("/onboarding");
 
   const result = await fetchCommunities({
-    searchString: "",
-    pageNumber: 1,
+    searchString: searchParams.q,
+    pageNumber: searchParams?.page ? +searchParams.page : 1,
     pageSize: 25,
   });
-  return (
-    <section className="">
-      <h1 className="head-text mb-10">Communities</h1>
-      {/* searchbar */}
 
-      <div className="mt-14 flex flex-col gap-9">
+  return (
+    <>
+      <h1 className="head-text">Communities</h1>
+
+      <div className="mt-5">
+        <Searchbar routeType="communities" />
+      </div>
+
+      <section className="mt-9 flex flex-wrap gap-4">
         {result.communities.length === 0 ? (
-          <p className="no-result">No Communities</p>
+          <p className="no-result">No Result</p>
         ) : (
           <>
             {result.communities.map((community) => (
@@ -39,16 +44,22 @@ const page = async () => {
                 id={community.id}
                 name={community.name}
                 username={community.username}
-                members={community.members}
                 imgUrl={community.image}
                 bio={community.bio}
+                members={community.members}
               />
             ))}
           </>
         )}
-      </div>
-    </section>
-  );
-};
+      </section>
 
-export default page;
+      <Pagination
+        path="communities"
+        pageNumber={searchParams?.page ? +searchParams.page : 1}
+        isNext={result.isNext}
+      />
+    </>
+  );
+}
+
+export default Page;
